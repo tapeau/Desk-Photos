@@ -46,6 +46,12 @@ Check the gallery below to see this plugin in action!
 
 ## Installation
 
+### Inside Obsidian
+1. Go to [this page](https://community.obsidian.md/plugins/desk-photos)
+2. Click "Add to Obsidian"
+3. Click "Install", then click "Enable"
+
+### Manual
 Create a folder named `desk-photos` inside your vault's `.obsidian/plugins` folder. Copy the `assets` folder, `main.js`, `manifest.json`, and `styles.css` from this repository into your `desk-photos` folder.
 
 > [!NOTE]
@@ -55,8 +61,6 @@ Create a folder named `desk-photos` inside your vault's `.obsidian/plugins` fold
 > The interface sounds are read from `.obsidian/plugins/desk-photos/assets/` (`flip.webm` for flipping, `slide.webm` for adding, removing, and dragging). If a file is missing, the plugin downloads it once from the GitHub repository and stores it there. These are optional, however, and the plugin will still work fine without them.
 
 Enable **Desk Photos** in Settings, under Community plugins.
-
-(This plugin will be submitted at the Obsidian Community plugin directory, so users may install and update this plugin directly from within Obsidian in the future.)
 
 ---
 
