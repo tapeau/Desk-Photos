@@ -32,7 +32,7 @@ Check the gallery below to see this plugin in action!
 
 ## Gallery
 
-![Video demonstration](https://github.com/user-attachments/assets/YOUR_UUID_HERE)
+<div align="center"><video src="https://github.com/user-attachments/assets/e9395ea0-8055-4870-96fb-63bd8abdbdcd" alt="Demonstration video" controls="controls"></video></div>
 
 ---
 
