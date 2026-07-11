@@ -3,7 +3,7 @@
 	"name": "Desk Photos",
 	"version": "1.0.0",
 	"minAppVersion": "1.12.7",
-	"description": "Add floating photos and stickers in editing mode, fixed to your screen or to some part of your notes. Customize them with frames, tapes, pins, texts, and they can even play a sound!",
+	"description": "Add sticky and floating photos in your editor, fixed to your screen or to some part of your notes. Customize them with frames, tapes, pins, texts, and they can even play a sound!",
 	"author": "tapeau",
 	"isDesktopOnly": true
 }
