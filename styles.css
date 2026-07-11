@@ -1,0 +1,663 @@
+/* Desk Photos — styles. Uses Obsidian CSS variables so it follows the vault theme. */
+
+/* --- overlay layer over the editor area ---
+ * Mounted on document.body (position: fixed) and kept aligned to the editor
+ * pane's rectangle from JS. Body-level like Obsidian's own menus/modals, so
+ * the workspace's internal stacking can never paint over it or eat clicks.
+ * z-index 25 keeps photos above the editor but below Obsidian popovers (30),
+ * modals (50), and menus (65). */
+.desk-photos-layer {
+	position: fixed;
+	overflow: hidden;
+	pointer-events: none;
+	z-index: 25;
+}
+
+.desk-photo {
+	position: absolute;
+	transform: translate(-50%, -50%);
+	pointer-events: auto;
+	user-select: none;
+	cursor: grab;
+	perspective: 900px;
+	transition: opacity 0.3s ease;
+}
+
+/* Peek behind: the photo fades to barely visible, clicks pass through,
+ * and decorations hide for the duration. */
+.desk-photo.dp-peek {
+	opacity: 0.06;
+	pointer-events: none;
+}
+
+.desk-photo.dp-peek .dp-decor {
+	display: none;
+}
+
+.desk-photo:active {
+	cursor: grabbing;
+}
+
+.desk-photo.dp-locked,
+.desk-photo.dp-locked:active {
+	cursor: default;
+}
+
+/* --- flip (front/back faces) --- */
+.dp-flip {
+	position: relative;
+	transform-style: preserve-3d;
+	transition: transform 0.6s cubic-bezier(0.45, 0.05, 0.25, 1);
+}
+
+.desk-photo.dp-flipped .dp-flip {
+	transform: rotateY(180deg);
+}
+
+.dp-front {
+	position: relative;
+	backface-visibility: hidden;
+	-webkit-backface-visibility: hidden;
+}
+
+.dp-back {
+	position: absolute;
+	inset: 0;
+	transform: rotateY(180deg);
+	backface-visibility: hidden;
+	-webkit-backface-visibility: hidden;
+	overflow: hidden;
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+/* Tapes and pins hide while flipping, while flipped, and while dragging. */
+.desk-photo.dp-flipped .dp-tapes,
+.desk-photo.dp-flipped .dp-pins,
+.desk-photo.dp-flipping .dp-tapes,
+.desk-photo.dp-flipping .dp-pins,
+.desk-photo.dp-dragging .dp-tapes,
+.desk-photo.dp-dragging .dp-pins {
+	display: none;
+}
+
+.dp-frame {
+	position: relative;
+	overflow: hidden;
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+/* The frame's paint lives on an underlay so its transparency never
+ * affects the image inside it. */
+.dp-frame-bg {
+	position: absolute;
+	inset: 0;
+}
+
+/* Per-photo shadow toggle */
+.desk-photo.dp-noshadow .dp-frame,
+.desk-photo.dp-noshadow .dp-back {
+	box-shadow: none;
+}
+
+.dp-clip {
+	position: relative;
+	overflow: hidden;
+}
+
+.dp-img {
+	position: absolute;
+	max-width: none;
+	pointer-events: none;
+	-webkit-user-drag: none;
+}
+
+/* Missing-image placeholder */
+.dp-ph {
+	display: none;
+	position: absolute;
+	inset: 0;
+	align-items: center;
+	justify-content: center;
+	background: var(--background-secondary);
+	color: var(--text-muted);
+}
+
+.dp-ph svg {
+	width: 40%;
+	height: 40%;
+}
+
+.dp-clip.dp-missing .dp-ph {
+	display: flex;
+}
+
+/* --- decorations (tapes, pins, texts) --- */
+.dp-decor {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+
+/* Text containers are sized to the image box from JS so frame changes do
+ * not affect texts. Inline left/top/width/height replace the inset. */
+.dp-texts {
+	inset: auto;
+}
+
+.dp-tape,
+.dp-pin,
+.dp-text {
+	position: absolute;
+	pointer-events: none;
+}
+
+.dp-tape svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+	filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+}
+
+/* The pin artwork includes its own painted shadow. */
+.dp-pin svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+.dp-text {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	overflow: hidden;
+	line-height: 1.15;
+}
+
+/* Shrink-to-fit, so the inner element's bounds track the actual text
+ * graphic (used for containment and overlap rules). */
+.dp-text-inner {
+	width: auto;
+	max-width: 100%;
+	min-width: 1em;
+	max-height: 100%;
+	outline: none;
+	word-break: break-word;
+}
+
+.dp-text-inner[contenteditable] {
+	user-select: text;
+	cursor: text;
+}
+
+/* Special control modes: enable pointer events per kind. */
+.desk-photo.dp-decor-mode {
+	cursor: copy;
+}
+
+.desk-photo.dp-mode-tape .dp-front .dp-tape,
+.desk-photo.dp-mode-pin .dp-front .dp-pin,
+.desk-photo.dp-mode-text .dp-front .dp-text,
+.desk-photo.dp-mode-backText .dp-back .dp-text {
+	pointer-events: auto;
+	cursor: move;
+}
+
+/* Keep tapes/pins visible while their editor is open even mid-drag class. */
+.desk-photo.dp-decor-mode .dp-tapes,
+.desk-photo.dp-decor-mode .dp-pins {
+	display: block;
+}
+
+.desk-photo.dp-flipped.dp-decor-mode .dp-tapes,
+.desk-photo.dp-flipped.dp-decor-mode .dp-pins {
+	display: none;
+}
+
+/* Decoration selection UI */
+.dp-tape-sel {
+	position: absolute;
+	pointer-events: none;
+	outline: 1.5px dashed var(--interactive-accent);
+	z-index: 5;
+}
+
+.dp-tsel-h {
+	position: absolute;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	background: var(--interactive-accent);
+	border: 2px solid var(--background-primary);
+	pointer-events: auto;
+}
+
+.dp-c-nw { left: -7px; top: -7px; cursor: nwse-resize; }
+.dp-c-ne { right: -7px; top: -7px; cursor: nesw-resize; }
+.dp-c-se { right: -7px; bottom: -7px; cursor: nwse-resize; }
+.dp-c-sw { left: -7px; bottom: -7px; cursor: nesw-resize; }
+
+.dp-tsel-btn {
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 26px;
+	height: 26px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	color: var(--text-normal);
+	pointer-events: auto;
+	cursor: pointer;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.dp-tsel-btn:hover {
+	background: var(--background-modifier-hover);
+}
+
+.dp-tsel-btn svg {
+	width: 15px;
+	height: 15px;
+	filter: none;
+}
+
+.dp-tsel-color { top: -36px; }
+.dp-tsel-move { top: -36px; cursor: grab; }
+.dp-tsel-move:active { cursor: grabbing; }
+.dp-tsel-rot { bottom: -36px; cursor: grab; }
+
+/* --- resize/rotate mode --- */
+.dp-handle {
+	position: absolute;
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
+	background: var(--interactive-accent);
+	border: 2px solid var(--background-primary);
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+	z-index: 6;
+}
+
+.dp-h-left { left: -8px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+.dp-h-right { right: -8px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+.dp-h-top { top: -8px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+.dp-h-bottom { bottom: -8px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+
+.dp-lockbtn {
+	position: absolute;
+	top: -40px;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 28px;
+	height: 28px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 6px;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	color: var(--text-normal);
+	cursor: pointer;
+	z-index: 6;
+}
+
+.dp-lockbtn:hover {
+	background: var(--background-modifier-hover);
+}
+
+.dp-lockbtn svg {
+	width: 15px;
+	height: 15px;
+}
+
+.dp-rotbtn {
+	position: absolute;
+	bottom: -40px;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 28px;
+	height: 28px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	color: var(--text-normal);
+	cursor: grab;
+	z-index: 6;
+}
+
+.dp-rotbtn:hover {
+	background: var(--background-modifier-hover);
+}
+
+.dp-rotbtn svg {
+	width: 15px;
+	height: 15px;
+}
+
+/* --- spotlight (decoration modes + error dialogs) --- */
+.dp-dim {
+	position: fixed;
+	inset: 0;
+	z-index: 9990;
+	background: rgba(0, 0, 0, 0.55);
+}
+
+.dp-holder {
+	position: fixed;
+	z-index: 9991;
+	pointer-events: none;
+}
+
+.dp-holder .desk-photo {
+	pointer-events: auto;
+}
+
+/* Floating themed boxes (instructions, error dialogs, crop bar, color popover) */
+.dp-box {
+	position: fixed;
+	z-index: 9993;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	padding: 12px 14px;
+	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+	color: var(--text-normal);
+	max-width: 340px;
+	font-size: var(--font-ui-small);
+}
+
+.dp-box h3 {
+	margin: 0 0 8px;
+	font-size: var(--font-ui-medium);
+}
+
+.dp-box p {
+	margin: 0 0 10px;
+	color: var(--text-muted);
+}
+
+.dp-box button {
+	cursor: pointer;
+}
+
+.dp-tape-help {
+	margin: 0 0 10px;
+	padding-left: 18px;
+	color: var(--text-muted);
+}
+
+.dp-tape-help li {
+	margin: 3px 0;
+}
+
+.dp-btnrow {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+/* The failing source path/link shown in the error dialog. */
+.dp-err-src {
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-smaller);
+	word-break: break-all;
+	color: var(--text-muted);
+}
+
+.dp-colorpop {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	z-index: 9994;
+}
+
+/* Corner-radius slider box */
+.dp-radiusbox {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	align-items: center;
+	white-space: nowrap;
+}
+
+.dp-radiusbox input[type="range"] {
+	width: 140px;
+}
+
+.dp-radius-val {
+	min-width: 38px;
+	text-align: right;
+	color: var(--text-muted);
+}
+
+/* The reset button sits on its own row inside the slider box. */
+.dp-radiusbox button {
+	flex: 1 1 100%;
+}
+
+/* --- text toolbar --- */
+.dp-textbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	margin: 0 0 10px;
+	padding: 6px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	background: var(--background-secondary);
+}
+
+.dp-tb-btn {
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.dp-tb-btn svg {
+	width: 14px;
+	height: 14px;
+}
+
+.dp-tb-btn.is-active {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.dp-tb-color {
+	width: 34px;
+	height: 28px;
+	padding: 1px;
+	cursor: pointer;
+}
+
+.dp-tb-alpha {
+	width: 60px;
+}
+
+.dp-tb-size {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.dp-tb-sizein {
+	width: 52px;
+	text-align: center;
+}
+
+.dp-tb-font {
+	width: 130px;
+}
+
+.dp-textbar.dp-tb-disabled {
+	opacity: 0.55;
+}
+
+/* --- crop editor --- */
+.dp-crop-stage {
+	position: fixed;
+	left: 50%;
+	top: 45%;
+	transform: translate(-50%, -50%);
+	z-index: 9991;
+}
+
+.dp-crop-stage img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	max-width: none;
+	pointer-events: none;
+	-webkit-user-drag: none;
+}
+
+.dp-crop-region {
+	position: absolute;
+	box-sizing: border-box;
+	box-shadow: 0 0 0 100000px rgba(0, 0, 0, 0.55);
+	border: 2px solid var(--interactive-accent);
+	cursor: move;
+}
+
+.dp-crop-region.dp-circle {
+	border-radius: 50%;
+}
+
+.dp-crop-hole {
+	position: absolute;
+	border: 2px dashed rgba(255, 255, 255, 0.75);
+	pointer-events: none;
+}
+
+.dp-crop-h {
+	position: absolute;
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
+	background: var(--interactive-accent);
+	border: 2px solid var(--background-primary);
+}
+
+.dp-ch-nw { left: -8px; top: -8px; cursor: nwse-resize; }
+.dp-ch-ne { right: -8px; top: -8px; cursor: nesw-resize; }
+.dp-ch-se { right: -8px; bottom: -8px; cursor: nwse-resize; }
+.dp-ch-sw { left: -8px; bottom: -8px; cursor: nesw-resize; }
+
+.dp-crop-bar {
+	left: 50%;
+	bottom: 24px;
+	transform: translateX(-50%);
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	max-width: none;
+	white-space: nowrap;
+}
+
+/* --- modals --- */
+.dp-option-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.dp-option-btn {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	justify-content: flex-start;
+	padding: 8px 12px;
+	cursor: pointer;
+}
+
+.dp-option-icon {
+	display: flex;
+	align-items: center;
+	color: var(--text-muted);
+}
+
+.dp-text-input {
+	width: 100%;
+	margin-bottom: 12px;
+}
+
+.dp-modal-btns {
+	display: flex;
+	gap: 8px;
+	justify-content: flex-end;
+}
+
+/* --- layers modal --- */
+.modal.dp-layers-modal {
+	width: 300px;
+}
+
+.dp-layers-hint {
+	color: var(--text-muted);
+	margin: 0 0 8px;
+	font-size: var(--font-ui-small);
+}
+
+.dp-layers-list {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	max-height: 400px;
+	overflow-y: auto;
+	padding: 2px;
+	margin-bottom: 10px;
+}
+
+.dp-layer-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 6px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	background: var(--background-secondary);
+	cursor: grab;
+	user-select: none;
+}
+
+.dp-layer-row.dp-layer-dragging {
+	opacity: 0.75;
+	border-color: var(--interactive-accent);
+	cursor: grabbing;
+}
+
+.dp-layer-grip {
+	display: flex;
+	flex-shrink: 0;
+	color: var(--text-muted);
+}
+
+.dp-layer-thumb {
+	flex: 1;
+	height: 76px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	border-radius: 4px;
+	background: var(--background-primary);
+	color: var(--text-muted);
+}
+
+.dp-layer-thumb img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	pointer-events: none;
+}
