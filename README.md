@@ -36,11 +36,15 @@ Check the gallery below to see this plugin in action!
 
 ---
 
-<div align="center"><img src="media/sample1.png" alt="Sample usage 1"></div>
+<div align="center"><img src="media/sample1.jpg" alt="Sample usage 1"></div>
 
 ---
 
 <div align="center"><img src="media/sample2.png" alt="Sample usage 2"></div>
+
+---
+
+<div align="center"><img src="media/sample3.png" alt="Sample usage 3"></div>
 
 ---
 
